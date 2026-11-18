@@ -12,12 +12,31 @@
     <string name="state_failed">Upload Failed</string>
     <string name="error_unknown">An unknown error occurred</string>
 
+    <string name="litterbox_time_1h">1h</string>
+    <string name="litterbox_time_12h">12h</string>
+    <string name="litterbox_time_24h">24h</string>
+    <string name="litterbox_time_72h">72h</string>
+
+    <string name="error_read_file">Unable to read the selected file</string>
+    <string name="error_empty_response">Server returned an empty response</string>
+    <string name="error_server_response">Server response: %1$s</string>
+    <string name="error_server_busy">Server is busy. Please try again later (HTTP %1$d)</string>
+    <string name="error_http">Upload failed: HTTP %1$d</string>
+    <string name="error_http_detail">Upload failed: HTTP %1$d %2$s</string>
+    <string name="error_network">Network error: %1$s</string>
+
     <string name="action_copy">Copy Link</string>
     <string name="action_qr_code">QR Code</string>
     <string name="action_open">Open</string>
-    <string name="action_send_another">Send Another File</string>
+    <string name="action_done">Done</string>
     <string name="toast_copied">Copied</string>
     <string name="btn_try_again">Try Again</string>
+
+    <string name="action_cancel">Cancel</string>
+    <string name="notification_channel_progress">Upload progress</string>
+    <string name="notification_channel_result">Upload results</string>
+    <string name="notification_uploading_percent">Uploading · %1$d%%</string>
+    <string name="notification_processing">Processing…</string>
 
     <string name="dialog_qr_title">Scan QR Code</string>
     <string name="content_description_qr">QR Code</string>
@@ -28,4 +47,11 @@
     <string name="settings_user_hash_hint">Enter your user hash to upload files to your Catbox account. Leave empty for anonymous uploads.</string>
     <string name="content_description_back">Back</string>
     <string name="content_description_toggle_visibility">Toggle password visibility</string>
+
+    <string name="notification_channel_name">Uploads</string>
+    <string name="notification_progress">%1$d%%</string>
+    <string name="error_schedule_failed">Unable to start the upload</string>
+    <string name="action_close">Close</string>
+    <string name="error_open_link">Unable to open the link</string>
+    <string name="upload_progress_percent">%1$d%%</string>
 </resources>

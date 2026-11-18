@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -15,10 +19,24 @@
         android:theme="@style/Theme.Catbox"
         tools:targetApi="31">
 
+        <service
+            android:name=".UploadJobService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false"
+            tools:targetApi="34" />
+
+        <receiver android:name=".UploadCancelReceiver" android:exported="false" />
+        <receiver android:name=".UploadCopyReceiver" android:exported="false" />
+
+        <!-- WorkManager 前景服務（API 33 以下） -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.Catbox">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

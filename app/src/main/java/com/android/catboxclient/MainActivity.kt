@@ -1,9 +1,12 @@
 package com.android.catboxclient
 
+import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -49,9 +53,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,23 +67,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.catboxclient.ui.theme.CatboxTheme
+import com.android.catboxclient.ui.theme.extendedColors
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val repository = PreferenceRepository(this)
-        val viewModelFactory = MainViewModel.Factory(repository)
         setContent {
             CatboxTheme {
-                val viewModel: MainViewModel = viewModel(factory = viewModelFactory)
                 Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    CatboxScreen(viewModel)
+                    CatboxScreen()
                 }
             }
         }
@@ -87,9 +93,9 @@ class MainActivity : ComponentActivity() {
 
 private fun openUrl(context: Context, url: String) {
     try {
-        CustomTabsIntent.Builder().build().launchUrl(context, Uri.parse(url))
-    } catch (e: Exception) {
-        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        CustomTabsIntent.Builder().build().launchUrl(context, url.toUri())
+    } catch (_: ActivityNotFoundException) {
+        Toast.makeText(context, R.string.error_open_link, Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -97,30 +103,47 @@ private fun openUrl(context: Context, url: String) {
 @Composable
 fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
-    val state = viewModel.uploadState
+    val state by viewModel.uploadState.collectAsStateWithLifecycle()
+    val options by viewModel.options.collectAsStateWithLifecycle()
 
     val filePickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            uri?.let { viewModel.uploadFile(context.contentResolver, it) }
+            uri?.let { viewModel.uploadFile(context.applicationContext, it) }
         }
+
+// Android 13+ 通知權限
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+    var permissionAsked by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!permissionAsked &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionAsked = true
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {}, actions = {
-                IconButton(onClick = {
-                    context.startActivity(
-                        Intent(
-                            context, SettingsActivity::class.java
+                    IconButton(onClick = {
+                        context.startActivity(
+                            Intent(
+                                context, SettingsActivity::class.java
+                            )
                         )
-                    )
-                }) {
-                    Icon(
-                        Icons.Default.Settings,
-                        contentDescription = stringResource(R.string.label_settings)
-                    )
-                }
-            }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                    }) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.label_settings)
+                        )
+                    }
+                }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }) { paddingValues ->
         Column(
@@ -150,32 +173,33 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
 
                     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                         SegmentedButton(
-                            selected = viewModel.selectedService == ServiceType.CATBOX,
-                            onClick = { viewModel.selectedService = ServiceType.CATBOX },
+                            selected = options.service == ServiceType.CATBOX,
+                            onClick = { viewModel.onServiceSelected(ServiceType.CATBOX) },
                             shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                         ) { Text(stringResource(R.string.service_catbox)) }
                         SegmentedButton(
-                            selected = viewModel.selectedService == ServiceType.LITTERBOX,
-                            onClick = { viewModel.selectedService = ServiceType.LITTERBOX },
+                            selected = options.service == ServiceType.LITTERBOX,
+                            onClick = { viewModel.onServiceSelected(ServiceType.LITTERBOX) },
                             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                         ) { Text(stringResource(R.string.service_litterbox)) }
                     }
 
                     Box(
                         modifier = Modifier
-                            .height(50.dp)
+                            .heightIn(min = 50.dp)
                             .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (viewModel.selectedService == ServiceType.LITTERBOX) {
+                        if (options.service == ServiceType.LITTERBOX) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    listOf("1h", "12h", "24h", "72h").forEach { time ->
+                                    LitterboxTime.entries.forEach { time ->
                                         FilterChip(
-                                            selected = viewModel.litterboxTime == time,
-                                            onClick = { viewModel.litterboxTime = time },
-                                            label = { Text(time) })
+                                            selected = options.litterboxTime == time,
+                                            onClick = { viewModel.onLitterboxTimeSelected(time) },
+                                            label = { Text(stringResource(time.labelRes)) }
+                                        )
                                     }
                                 }
                             }
@@ -193,7 +217,7 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                     ) {
                         Text(
                             stringResource(R.string.btn_send),
-                            fontSize = 18.sp,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -206,7 +230,10 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "${(currentState.progress * 100).toInt()}%",
+                        stringResource(
+                            R.string.upload_progress_percent,
+                            (currentState.progress * 100).toInt()
+                        ),
                         color = MaterialTheme.colorScheme.secondary
                     )
                     Spacer(modifier = Modifier.height(24.dp))
@@ -218,15 +245,22 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                             .padding(horizontal = 16.dp),
                         strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
                     )
+                    Spacer(Modifier.height(24.dp))
+                    TextButton(onClick = { viewModel.cancelUpload(context.applicationContext) }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
                 }
 
                 is UploadState.Success -> {
-                    var showQrDialog by remember { mutableStateOf(false) }
-
+                    var showQrDialog by rememberSaveable { mutableStateOf(false) }
                     if (showQrDialog) {
                         AlertDialog(
                             onDismissRequest = { showQrDialog = false },
-                            confirmButton = {},
+                            confirmButton = {
+                                TextButton(onClick = { showQrDialog = false }) {
+                                    Text(stringResource(R.string.action_close))
+                                }
+                            },
                             title = {
                                 Text(
                                     stringResource(R.string.dialog_qr_title),
@@ -253,7 +287,7 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(80.dp),
-                        tint = Color(0xFF4CAF50)
+                        tint = MaterialTheme.extendedColors.success
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -268,7 +302,7 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                                 .padding(24.dp)
                                 .fillMaxWidth(),
                             textAlign = TextAlign.Center,
-                            fontSize = 20.sp,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -309,7 +343,7 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                     }
                     Spacer(modifier = Modifier.height(48.dp))
                     Button(onClick = { viewModel.resetState() }) {
-                        Text(stringResource(R.string.action_send_another))
+                        Text(stringResource(R.string.action_done))
                     }
                 }
 
@@ -320,14 +354,16 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                         color = MaterialTheme.colorScheme.error
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text(currentState.message, textAlign = TextAlign.Center)
+                    Text(
+                        stringResource(currentState.messageRes, *currentState.args.toTypedArray()),
+                        textAlign = TextAlign.Center
+                    )
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(onClick = { viewModel.resetState() }) {
                         Text(stringResource(R.string.btn_try_again))
                     }
                 }
 
-                else -> {}
             }
         }
     }

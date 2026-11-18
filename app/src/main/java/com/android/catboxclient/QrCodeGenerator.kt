@@ -2,6 +2,7 @@ package com.android.catboxclient
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.core.graphics.createBitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
@@ -21,7 +22,7 @@ object QrCodeGenerator {
             }
         }
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        val bitmap = createBitmap(width, height, Bitmap.Config.RGB_565)
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
 
         return bitmap
