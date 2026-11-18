@@ -1,3 +1,4 @@
+## ⚠Important: If you encounter connection problems, please visit [this website](https://status.catbox.moe/status/catbox) to check the status of catbox.moe. If the problem persists, please report in the issue.
 # Catbox Uploader
 
 **Catbox Uploader** is a simple and lightweight Android application that allows you to anonymously host files on the Catbox platform and generate direct download links.
@@ -11,11 +12,7 @@
     *   **Litterbox:** For **temporary** storage with configurable expiration times.
  
 ## Screenshots
-> Outdated!
-<img src="https://github.com/user-attachments/assets/65ce5e52-7a6a-4d0b-9036-50b304d3d8f5" width=20%/>
-<img src="https://github.com/user-attachments/assets/f538e1bc-5832-4407-b420-92d43c4187b3" width=20%/>
-<img src="https://github.com/user-attachments/assets/ef47d233-2063-456f-a029-9ab0b245acd7" width=20%/>
-
+<img src="Screenshots/Home_dark.png" width=20%/> <img src="Screenshots/Home_light.png" width=20%/> <img src="Screenshots/Result.png" width=20%/> <img src="Screenshots/QRcode.png" width=20%/>
 
 ## ⚠️ Disclaimer & Terms of Service
 
