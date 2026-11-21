@@ -72,7 +72,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.catboxclient.ui.theme.CatboxTheme
-import com.android.catboxclient.ui.theme.extendedColors
+import com.android.catboxclient.ui.theme.SuccessGreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -287,7 +287,7 @@ fun CatboxScreen(viewModel: MainViewModel = viewModel()) {
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.extendedColors.success
+                        tint = SuccessGreen
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(

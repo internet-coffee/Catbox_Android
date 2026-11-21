@@ -8,10 +8,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -31,18 +27,6 @@ private val LightColorScheme = lightColorScheme(
     surface = Color(0xFFFFFBFE),
 )
 
-@Immutable
-data class ExtendedColors(
-    val success: Color = Color(0xFF4CAF50)
-)
-
-private val LocalExtendedColors = staticCompositionLocalOf { ExtendedColors() }
-
-val MaterialTheme.extendedColors: ExtendedColors
-    @Composable
-    @ReadOnlyComposable
-    get() = LocalExtendedColors.current
-
 @Composable
 fun CatboxTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -59,10 +43,8 @@ fun CatboxTheme(
         else -> LightColorScheme
     }
 
-    CompositionLocalProvider(LocalExtendedColors provides ExtendedColors()) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            content = content
-        )
-    }
+    MaterialTheme(
+        colorScheme = colorScheme,
+        content = content
+    )
 }
